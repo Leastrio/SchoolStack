@@ -22,6 +22,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pythonPkgs
+            pkgs.tailwindcss_4
           ];
         };
       }

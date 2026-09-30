@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Stack</title>
+    <link rel="stylesheet" href="{% static 'app/css/output.css' %}">
+</head>
+<body class="min-h-screen">
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer class="mt-8">
+        <div class="mx-auto max-w-7xl px-6 py-6 text-center text-sm">
+            School Stack &copy; 2026
+        </div>
+    </footer>
+</body>
+</html>

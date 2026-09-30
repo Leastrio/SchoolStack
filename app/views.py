@@ -1,4 +1,4 @@
 from django.shortcuts import render
 
-def index(req):
-  return HttpResponse("HELLO FROM SCHOOL STACK")
+def dashboard(req):
+  return render(req, "app/dashboard.html")
