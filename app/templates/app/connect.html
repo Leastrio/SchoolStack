@@ -1,0 +1,19 @@
+{% extends "app/base.html" %}
+{% block content %}
+<div class="mx-auto max-w-lg px-6 py-16">
+  <h1 class="text-3xl font-bold">School Stack</h1>
+  <p class="mt-2 text-gray-600">Paste your Canvas calendar feed URL to see all your assignments in one place.</p>
+
+  {% if error %}
+  <div class="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" action="{% url 'connect' %}" class="mt-6 space-y-4">
+    {% csrf_token %}
+    <label for="ical_url" class="block text-sm font-medium">Canvas calendar feed URL</label>
+    <input id="ical_url" name="ical_url" type="url" required autocomplete="off"
+           class="w-full rounded-lg border border-gray-300 px-3 py-2">
+    <button type="submit" class="w-full rounded-lg bg-black px-4 py-2 font-medium text-white">Connect</button>
+  </form>
+</div>
+{% endblock %}

@@ -33,13 +33,20 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.humanize',
     'app'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
 ]
+
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 90
+SESSION_COOKIE_HTTPONLY = True
 
 ROOT_URLCONF = 'config.urls'
 
