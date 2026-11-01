@@ -18,7 +18,7 @@ class Course(models.Model):
 
   class Meta:
     constraints = [
-      models.UniqueConstraint(fields=["student", "name"], name="unique_course_per_student"),
+      models.UniqueConstraint(fields=["student", "name"], name="unique_course_per_student"), # There can only be one of each course for each student
     ]
 
   def __str__(self):

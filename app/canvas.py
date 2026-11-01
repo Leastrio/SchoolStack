@@ -40,10 +40,12 @@ class FeedEvent:
 
 # getting the ical feed
 
+# Clean up the inputted raw url
 def normalize_feed_url(raw):
   parts = urllib.parse.urlsplit(raw.strip())
   host = parts.hostname.lower()
 
+  # Error out if invalid
   if parts.username or parts.password or (parts.port not in (None, 443)) or (parts.scheme != "https"):
     raise CanvasFeedError("That doesn't look like a Canvas calendar feed URL.")
   if host not in ALLOWED_HOSTS and not host.endswith(ALLOWED_HOST_SUFFIXES):
@@ -57,6 +59,7 @@ class _NoRedirect(urllib.request.HTTPRedirectHandler):
   def redirect_request(self, req, fp, code, msg, headers, newurl):
     return None
 
+# send a get request to the parsed ical url and return the response text
 def fetch_feed(url):
   opener = urllib.request.build_opener(_NoRedirect)
   request = urllib.request.Request(url, headers={"User-Agent": "SchoolStack/0.1"})
@@ -77,18 +80,21 @@ def fetch_feed(url):
     raise CanvasFeedError("Canvas didn't send back a calendar. Check the URL and try again.")
   return text
 
-# parsing stuff
+# parsing logic
 
+# Split the summary text into the title and label
 def split_summary(summary):
   match = SUMMARY_RE.match(summary)
   if match and match.group("title"):
     return match.group("title"), match.group("course").strip()
   return summary.strip(), OTHER_COURSE
 
+# parse the short course code
 def short_course_code(label):
   match = COURSE_CODE_RE.search(label)
   return f"{match.group(1)} {match.group(2)}" if match else label
 
+# convert date to a datetime
 def to_due_at(dtstart, local_tz):
   if isinstance(dtstart, datetime):
     if dtstart.tzinfo is None:
@@ -97,6 +103,7 @@ def to_due_at(dtstart, local_tz):
     
   return datetime.combine(dtstart, time(23, 59), tzinfo=local_tz), True
 
+# parse the ical data into events
 def parse_feed(text, local_tz=None):
   local_tz = local_tz or timezone.get_default_timezone()
   try:
@@ -123,6 +130,7 @@ def parse_feed(text, local_tz=None):
 
 # saving feed to db
 
+# save the event feed to the db
 @transaction.atomic
 def apply_feed(student, events):
   courses = {}
@@ -158,9 +166,11 @@ def apply_feed(student, events):
   student.last_synced = timezone.now()
   student.save(update_fields=["last_synced"])
 
+# fetch the ical data, parse the feed, and then apply to the db
 def sync_student(student):
   events = parse_feed(fetch_feed(student.ical_url))
   apply_feed(student, events)
 
+# check if student needs a sync
 def needs_sync(student):
   return student.last_synced is None or timezone.now() - student.last_synced > SYNC_INTERVAL
