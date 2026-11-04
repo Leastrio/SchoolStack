@@ -41,9 +41,7 @@
         </div>
         <div class="text-sm text-gray-600">
           {{ event.due_at|naturalday:"D, M j"|capfirst }}{% if not event.all_day %} · {{ event.due_at|time:"g:i A" }}{% endif %}
-        </div>
-        <div>
-            <input type="checkbox" id="myCheck" name="myCheck"> <!--Testing Checkbox-->
+          <input type="checkbox" id="myCheck" name="myCheck"> <!--Testing Checkbox-->
         </div>
       </li>
       {% empty %}
