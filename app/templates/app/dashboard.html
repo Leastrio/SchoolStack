@@ -18,7 +18,7 @@
 
   <!--Due this week and past due assignments-->
   <div class="mt-6 grid gap-4 sm:grid-cols-2">
-    <div class="rounded-xl border bg-blue-100 p-5">
+    <div class="rounded-xl border bg-darkblue p-5">
       <div class="text-sm">Due this week</div>
       <div class="mt-2 text-3xl font-bold">{{ due_this_week }}</div>
     </div>
@@ -32,16 +32,18 @@
     <h2 class="text-xl font-semibold">Upcoming Assignments</h2>
     <ul class="mt-2 divide-y">
       {% for event in upcoming %}
-      <li class="flex items-start justify-between py-3">
+      <li class="flex items-start justify-between py-3 pl-3 border-l-4{% if event.completed %} line-through opacity-50{% endif %}"
+        style="border-left-color: {{ event.course.color }}; background-color: {{ event.course.color }}15;">
         <div>
           {% if event.canvas_url %}<a href="{{ event.canvas_url }}" target="_blank" rel="noopener" class="font-medium hover:underline">{{ event.title }}</a>
           {% else %}<span class="font-medium">{{ event.title }}</span>{% endif %}
-          <div class="text-xs uppercase text-gray-500">{{ event.course.code }}</div>
-          
+          <div class="text-xs font-semibold uppercase" style="color: {{ event.course.color }};">{{ event.course.code }}</div>
         </div>
         <div class="text-sm text-gray-600">
           {{ event.due_at|naturalday:"D, M j"|capfirst }}{% if not event.all_day %} · {{ event.due_at|time:"g:i A" }}{% endif %}
-          <input type="checkbox" id="myCheck" name="myCheck"> <!--Testing Checkbox-->
+          <input type="checkbox" class="event-check ml-2"
+                  data-url="{% url 'toggle_event' event.pk %}"
+                  {% if event.completed %}checked{% endif %}>
         </div>
       </li>
       {% empty %}
@@ -50,4 +52,20 @@
     </ul>
   </div>
 </div>
+<script>
+  const csrfToken = "{{ csrf_token }}";
+  document.querySelectorAll(".event-check").forEach(box => {
+    box.addEventListener("change", async () => {
+      const res = await fetch(box.dataset.url, {
+        method: "POST",
+        headers: { "X-CSRFToken": csrfToken },
+      });
+      if (!res.ok) { box.checked = !box.checked; return; }  // revert if the save failed
+      const data = await res.json();
+      box.checked = data.completed;
+      box.closest("li").classList.toggle("line-through", data.completed);
+      box.closest("li").classList.toggle("opacity-50", data.completed);
+    });
+  });
+</script>
 {% endblock %}

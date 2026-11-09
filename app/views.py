@@ -6,7 +6,11 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from . import canvas
 from .canvas import CanvasFeedError
-from .models import Student, hash_feed_url
+from .models import Student, hash_feed_url, CalendarEvent
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
+
 
 def current_student(req):
   student_id = req.session.get("student_id")
@@ -58,7 +62,6 @@ def dashboard(req):
     "past_due": events.filter(due_at__lt=now, due_at__gte=now - timedelta(days=7)).count(),
   })
 
-
 @require_POST
 def sync(req):
   student = current_student(req)
@@ -69,6 +72,17 @@ def sync(req):
   except CanvasFeedError as e:
     req.session["sync_error"] = str(e)
   return redirect("dashboard")
+
+#For completion of assignments
+@require_POST
+def toggle_event_completion(req, event_id):
+  student = current_student(req)
+  if student is None:
+    return JsonResponse({"error": "Not connected"}, status = 401)
+  event = get_object_or_404(CalendarEvent, pk=event_id, student=student)
+  event.completed = not event.completed
+  event.save(update_fields=["completed"])
+  return JsonResponse({"completed": event.completed})
 
 @require_POST
 def logout(req):
