@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
+from django.db.models import Count, Q
 
 from . import canvas
 from .canvas import CanvasFeedError
@@ -248,4 +249,39 @@ def calendar_view(req):
     "prev_month": prev_month.strftime("%Y-%m"),
     "next_month": next_month.strftime("%Y-%m"),
     "this_month": today.strftime("%Y-%m"),
+  })
+
+
+def course_list(req):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+
+  now = timezone.now()
+  courses = student.courses.annotate(
+    total=Count("events"),
+    done=Count("events", filter=Q(events__completed=True)),
+    overdue=Count("events", filter=Q(events__completed=False, events__due_at__lt=now)),
+    remaining=Count("events", filter=Q(events__completed=False, events__due_at__gte=now)),
+  )
+  return render(req, "app/courses.html", {"courses": courses})
+
+def course_detail(req, course_id):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+  course = get_object_or_404(Course, pk=course_id, student=student)
+
+  now = timezone.now()
+  events = course.events.select_related("course")
+  total = events.count()
+  done = events.filter(completed=True).count()
+  return render(req, "app/course_detail.html", {
+    "course": course,
+    "upcoming": events.filter(due_at__gte=now),
+    # Most recent first for past work
+    "past": events.filter(due_at__lt=now).order_by("-due_at"),
+    "total": total,
+    "done": done,
+    "percent": round(done * 100 / total) if total else 0,
   })

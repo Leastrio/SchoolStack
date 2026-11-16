@@ -31,6 +31,7 @@ class Course(models.Model):
   name = models.CharField(max_length=200)   # "2026Fa CS 3300 001"
 
   class Meta:
+    ordering = ["code"]
     constraints = [
       models.UniqueConstraint(fields=["student", "name"], name="unique_course_per_student"), # There can only be one of each course for each student
     ]

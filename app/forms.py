@@ -12,7 +12,7 @@ class TaskForm(forms.Form):
   due_date = forms.DateField(widget=forms.DateInput(attrs={"class": INPUT, "type": "date"}))
   due_time = forms.TimeField(required=False, widget=forms.TimeInput(attrs={"class": INPUT, "type": "time"}),
                              help_text="Leave blank for end of day.")
-  course = forms.ModelChoiceField(queryset=Course.objects.none(), required=False, empty_label="Personal (no class)",
+  course = forms.ModelChoiceField(queryset=Course.objects.none(), required=False, empty_label="Personal",
                                   widget=forms.Select(attrs={"class": INPUT}))
   notes = forms.CharField(required=False, widget=forms.Textarea(attrs={"class": INPUT, "rows": 3}))
 

@@ -16,6 +16,7 @@
       <div class="flex gap-1 overflow-x-auto px-3 py-3 md:mt-4 md:flex-col md:overflow-visible">
         <a href="{% url 'dashboard' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'dashboard' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Home</a>
         <a href="{% url 'calendar' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'calendar' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Calendar</a>
+        <a href="{% url 'courses' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'courses' or page == 'course_detail' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Courses</a>
       </div>
       <div class="hidden border-t border-slate-200 px-3 py-4 md:mt-auto md:block">
         <form method="post" action="{% url 'logout' %}">{% csrf_token %}
