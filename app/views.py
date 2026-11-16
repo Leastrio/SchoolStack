@@ -11,6 +11,14 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 
+HEAT_LEVELS = [
+  "bg-slate-100 text-slate-400",
+  "bg-indigo-100 text-indigo-900",
+  "bg-indigo-300 text-indigo-950",
+  "bg-indigo-500 text-white",
+  "bg-indigo-700 text-white",
+]
+HEATMAP_DAYS = 14
 
 def current_student(req):
   if not hasattr(req, "_student"):
@@ -27,6 +35,24 @@ def week_progress(student, today):
   total = week.count()
   done = week.filter(completed=True).count()
   return {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0}
+
+def local_date(dt):
+  return timezone.localtime(dt).date()
+
+def workload_heatmap(student, today):
+  start = day_start(today)
+  end = day_start(today + timedelta(days=HEATMAP_DAYS))
+  counts = {}
+  for due_at in student.events.filter(completed=False, due_at__gte=start, due_at__lt=end).values_list("due_at", flat=True):
+    d = local_date(due_at)
+    counts[d] = counts.get(d, 0) + 1
+
+  days = []
+  for i in range(HEATMAP_DAYS):
+    d = today + timedelta(days=i)
+    count = counts.get(d, 0)
+    days.append({"date": d, "count": count, "classes": HEAT_LEVELS[min(count, len(HEAT_LEVELS) - 1)]})
+  return days
 
 @require_http_methods(["GET", "POST"])
 def connect(req):
@@ -76,6 +102,7 @@ def dashboard(req):
     # Done items due in the last week or later, so they don't clutter the main list
     "recently_done": events.filter(completed=True, due_at__gte=now - timedelta(days=7)),
     "progress": week_progress(student, today),
+    "heatmap": workload_heatmap(student, today),
   })
 
 @require_POST
