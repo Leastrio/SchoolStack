@@ -2,21 +2,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Removed lightblue background to see if its messing with other colors  -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Stack</title>
+    <title>{% block title %}School Stack{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'app/css/output.css' %}">
 </head>
-<body class="min-h-screen">
-    <main>
-        {% block content %}
-        {% endblock %}
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased">
+  {% if nav_student %}
+  <div class="md:flex">
+    {% with page=request.resolver_match.url_name %}
+    <nav class="border-b border-slate-200 bg-white md:sticky md:top-0 md:flex md:h-screen md:w-56 md:shrink-0 md:flex-col md:border-b-0 md:border-r">
+      <a href="{% url 'dashboard' %}" class="block px-5 pt-4 text-lg font-bold text-slate-900 md:pt-6">School Stack</a>
+      <div class="flex gap-1 overflow-x-auto px-3 py-3 md:mt-4 md:flex-col md:overflow-visible">
+        <a href="{% url 'dashboard' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'dashboard' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Home</a>
+      </div>
+      <div class="hidden border-t border-slate-200 px-3 py-4 md:mt-auto md:block">
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+          <button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-600 hover:bg-slate-100">Log out</button>
+        </form>
+        <form method="post" action="{% url 'forget_me' %}" onsubmit="return confirm('Delete your synced assignments, notes and grades?');">{% csrf_token %}
+          <button class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 hover:bg-red-50 hover:text-red-700">Forget me</button>
+        </form>
+      </div>
+    </nav>
+    {% endwith %}
+
+    <main class="min-w-0 flex-1 px-4 py-6 md:px-8 md:py-8">
+      {% block content %}{% endblock %}
+      <form method="post" action="{% url 'logout' %}" class="mt-10 text-center md:hidden">{% csrf_token %}
+        <button class="text-sm text-slate-500 underline">Log out</button>
+      </form>
     </main>
-    <footer class="mt-8">
-        <div class="mx-auto max-w-7xl px-6 py-6 text-center text-sm">
-            School Stack &copy; 2026
-        </div>
-    </footer>
+  </div>
+
+  <script>
+    const csrfToken = "{{ csrf_token }}";
+    document.querySelectorAll(".event-check").forEach(box => {
+      box.addEventListener("change", async () => {
+        const res = await fetch(box.dataset.url, { method: "POST", headers: { "X-CSRFToken": csrfToken } });
+        if (!res.ok) { box.checked = !box.checked; return; }
+        const data = await res.json();
+        box.checked = data.completed;
+        const row = box.closest("[data-event-row]");
+        row.classList.toggle("opacity-50", data.completed);
+        row.querySelector("[data-title]").classList.toggle("line-through", data.completed);
+      });
+    });
+  </script>
+  {% else %}
+  <main>
+    {% block public_content %}{% endblock %}
+  </main>
+  {% endif %}
 </body>
 </html>

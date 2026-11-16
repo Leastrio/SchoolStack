@@ -1,0 +1,18 @@
+{% load humanize %}
+<li data-event-row class="flex items-center gap-3 py-3{% if event.completed %} opacity-50{% endif %}">
+  <input type="checkbox" class="event-check h-5 w-5 shrink-0 cursor-pointer accent-indigo-600"
+         data-url="{% url 'toggle_event' event.pk %}" aria-label="Mark {{ event.title }} done"
+         {% if event.completed %}checked{% endif %}>
+  <span class="h-10 w-1 shrink-0 rounded-full" style="background-color: {{ event.course.color }};"></span>
+  <div class="min-w-0 flex-1">
+    <a href="{{ event.canvas_url }}" target="_blank" rel="noopener" data-title
+       class="block truncate font-medium text-slate-900 hover:text-indigo-700 hover:underline{% if event.completed %} line-through{% endif %}">{{ event.title }}</a>
+    <div class="mt-0.5 flex items-center gap-2 text-xs">
+      <span class="font-semibold" style="color: {{ event.course.color }};">{{ event.course.code }}</span>
+    </div>
+  </div>
+  <div class="shrink-0 text-right text-sm text-slate-600">
+    {{ event.due_at|naturalday:"D, M j"|capfirst }}
+    {% if not event.all_day %}<div class="text-xs text-slate-400">{{ event.due_at|time:"g:i A" }}</div>{% endif %}
+  </div>
+</li>

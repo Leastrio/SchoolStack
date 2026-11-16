@@ -13,10 +13,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 
 def current_student(req):
-  student_id = req.session.get("student_id")
-  if student_id is None:
-    return None
-  return Student.objects.filter(pk=student_id).first()
+  if not hasattr(req, "_student"):
+    student_id = req.session.get("student_id")
+    req._student = Student.objects.filter(pk=student_id).first() if student_id else None
+  return req._student
 
 @require_http_methods(["GET", "POST"])
 def connect(req):
