@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -17,6 +17,16 @@ def current_student(req):
     student_id = req.session.get("student_id")
     req._student = Student.objects.filter(pk=student_id).first() if student_id else None
   return req._student
+
+def day_start(d):
+  return timezone.make_aware(datetime.combine(d, time.min))
+
+def week_progress(student, today):
+  monday = today - timedelta(days=today.weekday())
+  week = student.events.filter(due_at__gte=day_start(monday), due_at__lt=day_start(monday + timedelta(days=7)))
+  total = week.count()
+  done = week.filter(completed=True).count()
+  return {"done": done, "total": total, "percent": round(done * 100 / total) if total else 0}
 
 @require_http_methods(["GET", "POST"])
 def connect(req):
@@ -51,6 +61,7 @@ def dashboard(req):
       sync_error = str(e)
 
   now = timezone.now()
+  today = timezone.localdate()
   events = student.events.select_related("course")
   upcoming = events.filter(completed=False, due_at__gte=now)
   overdue = events.filter(completed=False, due_at__lt=now)
@@ -64,6 +75,7 @@ def dashboard(req):
     "due_next_7_days": upcoming.filter(due_at__lt=now + timedelta(days=7)).count(),
     # Done items due in the last week or later, so they don't clutter the main list
     "recently_done": events.filter(completed=True, due_at__gte=now - timedelta(days=7)),
+    "progress": week_progress(student, today),
   })
 
 @require_POST
