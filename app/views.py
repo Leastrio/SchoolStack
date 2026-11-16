@@ -7,6 +7,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from . import canvas
 from .canvas import CanvasFeedError
 from .models import Student, hash_feed_url, CalendarEvent
+from .forms import NotesForm
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -139,3 +140,26 @@ def forget_me(req):
     student.delete()
   req.session.flush()
   return redirect("connect")
+
+@require_http_methods(["GET", "POST"])
+def event_detail(req, event_id):
+  """One assignment: Canvas details plus the student's own notes."""
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+  event = get_object_or_404(CalendarEvent.objects.select_related("course"), pk=event_id, student=student)
+
+  if req.method == "POST":
+    form = NotesForm(req.POST)
+    if form.is_valid():
+      event.notes = form.cleaned_data["notes"].strip()
+      event.save(update_fields=["notes"])
+      return redirect(f"{req.path}?saved=1")
+  else:
+    form = NotesForm(initial={"notes": event.notes})
+
+  return render(req, "app/event_detail.html", {
+    "event": event,
+    "form": form,
+    "saved": req.GET.get("saved") == "1",
+  })

@@ -37,7 +37,7 @@ class Course(models.Model):
     return self.code
 
   @property
-  def color(self): 
+  def color(self):
     return COURSE_COLORS[zlib.crc32(self.name.encode("utf-8")) % len(COURSE_COLORS)]
 
 
@@ -52,6 +52,7 @@ class CalendarEvent(models.Model):
   all_day = models.BooleanField(default=False)
   canvas_url = models.URLField(max_length=500, blank=True)
   completed = models.BooleanField(default=False)
+  notes = models.TextField(blank=True)
 
   class Meta:
     ordering = ["due_at"]

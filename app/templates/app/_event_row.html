@@ -5,10 +5,11 @@
          {% if event.completed %}checked{% endif %}>
   <span class="h-10 w-1 shrink-0 rounded-full" style="background-color: {{ event.course.color }};"></span>
   <div class="min-w-0 flex-1">
-    <a href="{{ event.canvas_url }}" target="_blank" rel="noopener" data-title
+    <a href="{% url 'event_detail' event.pk %}" data-title
        class="block truncate font-medium text-slate-900 hover:text-indigo-700 hover:underline{% if event.completed %} line-through{% endif %}">{{ event.title }}</a>
     <div class="mt-0.5 flex items-center gap-2 text-xs">
       <span class="font-semibold" style="color: {{ event.course.color }};">{{ event.course.code }}</span>
+      {% if event.notes %}<span class="rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">Has notes</span>{% endif %}
     </div>
   </div>
   <div class="shrink-0 text-right text-sm{% if event.is_overdue %} font-medium text-red-600{% else %} text-slate-600{% endif %}">

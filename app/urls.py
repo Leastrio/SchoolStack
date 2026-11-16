@@ -7,5 +7,6 @@ urlpatterns = [
   path("sync/", views.sync, name="sync"),
   path("logout/", views.logout, name="logout"),
   path("forget/", views.forget_me, name="forget_me"),
+  path("event/<int:event_id>/", views.event_detail, name="event_detail"),
   path("event/<int:event_id>/toggle/", views.toggle_event_completion, name="toggle_event"),
 ]
