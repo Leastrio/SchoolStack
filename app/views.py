@@ -2,7 +2,7 @@ import calendar
 import uuid
 from datetime import date, datetime, time, timedelta
 
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -13,8 +13,8 @@ from django.db.models import Count, Q
 
 from . import canvas
 from .canvas import CanvasFeedError
-from .forms import NotesForm, TaskForm
-from .models import PERSONAL_COURSE, CalendarEvent, Course, Student, hash_feed_url
+from .forms import NotesForm, TaskForm, GradeForm
+from .models import PERSONAL_COURSE, CalendarEvent, Course, Student, calculate_gpa, hash_feed_url
 
 HEAT_LEVELS = [
   "bg-slate-100 text-slate-400",
@@ -104,7 +104,6 @@ def dashboard(req):
     "overdue_count": overdue.count(),
     "upcoming": upcoming[:10],
     "due_next_7_days": upcoming.filter(due_at__lt=now + timedelta(days=7)).count(),
-    # Done items due in the last week or later, so they don't clutter the main list
     "recently_done": events.filter(completed=True, due_at__gte=now - timedelta(days=7)),
     "progress": week_progress(student, today),
     "heatmap": workload_heatmap(student, today),
@@ -332,3 +331,38 @@ def notifications_check(req):
       "url": reverse("event_detail", args=[event.pk]),
     })
   return JsonResponse({"items": items})
+
+
+@require_http_methods(["GET", "POST"])
+def gpa(req):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+
+  if req.method == "POST":
+    form = GradeForm(req.POST)
+    if form.is_valid():
+      entry = form.save(commit=False)
+      entry.student = student
+      entry.save()
+      return redirect_back(req, "gpa")
+  else:
+    form = GradeForm()
+
+  grades = list(student.grades.all())
+  return render(req, "app/gpa.html", {
+    "form": form,
+    "grades": grades,
+    "gpa": calculate_gpa(grades),
+    "total_credits": sum(g.credits for g in grades),
+  })
+
+@require_POST
+def delete_grade(req, grade_id):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+  deleted, _ = student.grades.filter(pk=grade_id).delete()
+  if not deleted:
+    raise Http404
+  return redirect_back(req, "gpa")

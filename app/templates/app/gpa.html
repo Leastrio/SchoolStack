@@ -1,0 +1,65 @@
+{% extends "app/base.html" %}
+{% block title %}GPA · School Stack{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <h1 class="text-2xl font-bold text-slate-900">GPA Calculator</h1>
+
+  <div class="mt-6 grid gap-4 md:grid-cols-3">
+    <div class="rounded-xl border border-slate-200 bg-white p-5 text-center">
+      <div class="text-sm text-slate-500">Current GPA</div>
+      <div class="mt-1 text-5xl font-bold text-slate-900">{% if gpa is not None %}{{ gpa|floatformat:2 }}{% else %}&ndash;{% endif %}</div>
+      <div class="mt-2 text-sm text-slate-500">{{ total_credits|floatformat:"-1" }} credit{{ total_credits|pluralize }}</div>
+    </div>
+
+    <form method="post" class="space-y-2 rounded-xl border border-slate-200 bg-white p-5 md:col-span-2">
+      {% csrf_token %}
+      <h2 class="font-semibold text-slate-900">Add a course</h2>
+      {% if form.errors %}
+      <div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+        {% for field, errors in form.errors.items %}{% for error in errors %}<div>{{ error }}</div>{% endfor %}{% endfor %}
+      </div>
+      {% endif %}
+      {{ form.course_name }}
+      <div class="grid grid-cols-2 gap-2">
+        {{ form.credits }}
+        {{ form.grade }}
+      </div>
+      <button class="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700">Add course</button>
+      <datalist id="course-options">
+        {% for course in nav_student.courses.all %}<option value="{{ course.code }}">{% endfor %}
+      </datalist>
+    </form>
+  </div>
+
+  <div class="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white">
+    <table class="w-full text-left text-sm">
+      <thead class="bg-slate-50 text-slate-500">
+        <tr>
+          <th class="px-5 py-3 font-medium">Course</th>
+          <th class="px-5 py-3 font-medium">Credits</th>
+          <th class="px-5 py-3 font-medium">Grade</th>
+          <th class="px-5 py-3 font-medium">Points</th>
+          <th class="px-5 py-3"><span class="sr-only">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for entry in grades %}
+        <tr>
+          <td class="px-5 py-3 font-medium text-slate-900">{{ entry.course_name }}</td>
+          <td class="px-5 py-3">{{ entry.credits|floatformat:"-1" }}</td>
+          <td class="px-5 py-3">{{ entry.grade }}</td>
+          <td class="px-5 py-3 text-slate-500">{{ entry.points|floatformat:1 }}</td>
+          <td class="px-5 py-3 text-right">
+            <form method="post" action="{% url 'delete_grade' entry.pk %}">{% csrf_token %}
+              <button class="text-sm text-slate-400 hover:text-red-600">Remove</button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="px-5 py-8 text-center text-slate-500">Add your courses and grades to calculate your GPA.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

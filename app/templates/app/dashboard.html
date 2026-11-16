@@ -58,35 +58,32 @@
     </div>
   </div>
 
+  <!-- Assignments -->
+  <div class="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+    {% if overdue %}
+    <h2 class="font-semibold text-red-700">Overdue</h2>
+    <ul class="mb-5 divide-y divide-slate-100">
+      {% for event in overdue %}{% include "app/_event_row.html" %}{% endfor %}
+    </ul>
+    {% endif %}
 
-  <div class="mt-4 grid gap-4 lg:grid-cols-3">
-    <!-- Assignments -->
-    <div class="min-w-0 rounded-xl border border-slate-200 bg-white p-5 lg:col-span-3">
-      {% if overdue %}
-      <h2 class="font-semibold text-red-700">Overdue</h2>
-      <ul class="mb-5 divide-y divide-slate-100">
-        {% for event in overdue %}{% include "app/_event_row.html" %}{% endfor %}
-      </ul>
-      {% endif %}
+    <h2 class="font-semibold text-slate-900">Upcoming assignments</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for event in upcoming %}
+        {% include "app/_event_row.html" %}
+      {% empty %}
+        <li class="py-6 text-center text-slate-500">You're all caught up. Nothing left to do.</li>
+      {% endfor %}
+    </ul>
 
-      <h2 class="font-semibold text-slate-900">Upcoming assignments</h2>
+    {% if recently_done %}
+    <details class="mt-4 border-t border-slate-100 pt-3">
+      <summary class="cursor-pointer text-sm font-medium text-slate-600">Done recently ({{ recently_done|length }})</summary>
       <ul class="divide-y divide-slate-100">
-        {% for event in upcoming %}
-          {% include "app/_event_row.html" %}
-        {% empty %}
-          <li class="py-6 text-center text-slate-500">You're all caught up. Nothing left to do.</li>
-        {% endfor %}
+        {% for event in recently_done %}{% include "app/_event_row.html" %}{% endfor %}
       </ul>
-
-      {% if recently_done %}
-      <details class="mt-4 border-t border-slate-100 pt-3">
-        <summary class="cursor-pointer text-sm font-medium text-slate-600">Done recently ({{ recently_done|length }})</summary>
-        <ul class="divide-y divide-slate-100">
-          {% for event in recently_done %}{% include "app/_event_row.html" %}{% endfor %}
-        </ul>
-      </details>
-      {% endif %}
-    </div>
+    </details>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

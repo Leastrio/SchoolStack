@@ -1,5 +1,6 @@
+from decimal import Decimal
 from django import forms
-from .models import Course
+from .models import Course, GradeEntry
 
 INPUT = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
 
@@ -20,3 +21,23 @@ class TaskForm(forms.Form):
     super().__init__(*args, **kwargs)
     # Only let students pick their own courses
     self.fields["course"].queryset = student.courses.all()
+
+class GradeForm(forms.ModelForm):
+  class Meta:
+    model = GradeEntry
+    fields = ["course_name", "credits", "grade"]
+    widgets = {
+      "course_name": forms.TextInput(attrs={"class": INPUT, "placeholder": "Course name", "list": "course-options"}),
+      "credits": forms.NumberInput(attrs={"class": INPUT, "placeholder": "Credits", "step": "0.5", "min": "0.5", "max": "10"}),
+      "grade": forms.Select(attrs={"class": INPUT}),
+    }
+
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields["grade"].choices = [("", "Grade")] + list(self.fields["grade"].choices)[1:]
+
+  def clean_credits(self):
+    credits = self.cleaned_data["credits"]
+    if credits <= 0 or credits > Decimal("10"):
+      raise forms.ValidationError("Credits must be between 0.5 and 10.")
+    return credits
