@@ -1,0 +1,9 @@
+line-length = 120
+indent-width = 2
+exclude = ["app/migrations"]
+
+[format]
+quote-style = "double"
+
+[lint]
+select = ["E", "F", "I"]

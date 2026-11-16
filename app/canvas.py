@@ -4,8 +4,8 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
-import nh3
 
+import nh3
 from django.db import transaction
 from django.utils import timezone
 from ical.calendar_stream import IcsCalendarStream
@@ -29,6 +29,7 @@ OTHER_COURSE = "Other"
 class CanvasFeedError(Exception):
   """Something went wrong with the feed."""
 
+
 @dataclass
 class FeedEvent:
   uid: str
@@ -40,7 +41,9 @@ class FeedEvent:
   canvas_url: str
   description_html: str = ""
 
+
 # getting the ical feed
+
 
 # Clean up the inputted raw url
 def normalize_feed_url(raw):
@@ -53,13 +56,17 @@ def normalize_feed_url(raw):
   if host not in ALLOWED_HOSTS and not host.endswith(ALLOWED_HOST_SUFFIXES):
     raise CanvasFeedError("Only Canvas calendar feeds are supported.")
   if not FEED_PATH_RE.match(parts.path):
-    raise CanvasFeedError("That doesn't look like a calendar feed. In Canvas, open Calendar and click \"Calendar Feed\" to copy it.")
+    raise CanvasFeedError(
+      'That doesn\'t look like a calendar feed. In Canvas, open Calendar and click "Calendar Feed" to copy it.'
+    )
 
   return f"https://{host}{parts.path}"
+
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
   def redirect_request(self, req, fp, code, msg, headers, newurl):
     return None
+
 
 # send a get request to the parsed ical url and return the response text
 def fetch_feed(url):
@@ -70,7 +77,9 @@ def fetch_feed(url):
       data = response.read(MAX_FEED_BYTES + 1)
   except urllib.error.HTTPError as e:
     if e.code in (401, 403, 404):
-      raise CanvasFeedError("Canvas didn't recognize that calendar URL. Copy it again from Canvas → Calendar → Calendar Feed.") from e
+      raise CanvasFeedError(
+        "Canvas didn't recognize that calendar URL. Copy it again from Canvas → Calendar → Calendar Feed."
+      ) from e
     raise CanvasFeedError(f"Canvas returned an error ({e.code}). Try again in a minute.") from e
   except (urllib.error.URLError, TimeoutError, OSError) as e:
     raise CanvasFeedError("Couldn't reach Canvas. Try again in a minute.") from e
@@ -82,7 +91,9 @@ def fetch_feed(url):
     raise CanvasFeedError("Canvas didn't send back a calendar. Check the URL and try again.")
   return text
 
+
 # parsing logic
+
 
 # Split the summary text into the title and label
 def split_summary(summary):
@@ -91,10 +102,12 @@ def split_summary(summary):
     return match.group("title"), match.group("course").strip()
   return summary.strip(), OTHER_COURSE
 
+
 # parse the short course code
 def short_course_code(label):
   match = COURSE_CODE_RE.search(label)
   return f"{match.group(1)} {match.group(2)}" if match else label
+
 
 # convert date to a datetime
 def to_due_at(dtstart, local_tz):
@@ -102,17 +115,44 @@ def to_due_at(dtstart, local_tz):
     if dtstart.tzinfo is None:
       dtstart = dtstart.replace(tzinfo=local_tz)
     return dtstart, False
-    
+
   return datetime.combine(dtstart, time(23, 59), tzinfo=local_tz), True
+
 
 # Canvas's formatted descriptions
 DESCRIPTION_TAGS = {
-  "p", "br", "hr", "div", "span",
-  "h1", "h2", "h3", "h4", "h5", "h6",
-  "strong", "b", "em", "i", "u", "s", "sub", "sup",
-  "ul", "ol", "li",
-  "a", "code", "pre", "blockquote",
-  "table", "thead", "tbody", "tr", "th", "td",
+  "p",
+  "br",
+  "hr",
+  "div",
+  "span",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "sub",
+  "sup",
+  "ul",
+  "ol",
+  "li",
+  "a",
+  "code",
+  "pre",
+  "blockquote",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "th",
+  "td",
 }
 DESCRIPTION_ATTRIBUTES = {
   "a": {"href", "title"},
@@ -120,11 +160,17 @@ DESCRIPTION_ATTRIBUTES = {
   "th": {"colspan", "rowspan"},
 }
 
+
 def canvas_html_description(event):
   for prop in event.extras:
     if prop.name.lower() == "x-alt-desc":
-      return re.sub(r"\\([\\;,nN])", lambda m: "\n" if m.group(1) in "nN" else m.group(1), prop.value)
+      return re.sub(
+        r"\\([\\;,nN])",
+        lambda m: "\n" if m.group(1) in "nN" else m.group(1),
+        prop.value,
+      )
   return ""
+
 
 def clean_description_html(html):
   if not html:
@@ -137,6 +183,7 @@ def clean_description_html(html):
     link_rel="noopener noreferrer",
     set_tag_attribute_values={"a": {"target": "_blank"}},
   ).strip()
+
 
 # parse the ical data into events
 def parse_feed(text, local_tz=None):
@@ -152,19 +199,23 @@ def parse_feed(text, local_tz=None):
       continue
     due_at, all_day = to_due_at(event.dtstart, local_tz)
     title, course_label = split_summary(event.summary or "Untitled")
-    events.append(FeedEvent(
-      uid=event.uid.strip()[:255],
-      title=title[:255],
-      course_label=course_label[:200],
-      description=(event.description or "").strip(),
-      due_at=due_at,
-      all_day=all_day,
-      canvas_url=str(event.url or "").strip()[:500],
-      description_html=clean_description_html(canvas_html_description(event)),
-    ))
+    events.append(
+      FeedEvent(
+        uid=event.uid.strip()[:255],
+        title=title[:255],
+        course_label=course_label[:200],
+        description=(event.description or "").strip(),
+        due_at=due_at,
+        all_day=all_day,
+        canvas_url=str(event.url or "").strip()[:500],
+        description_html=clean_description_html(canvas_html_description(event)),
+      )
+    )
   return events
 
+
 # saving feed to db
+
 
 # save the event feed to the db
 @transaction.atomic
@@ -203,10 +254,12 @@ def apply_feed(student, events):
   student.last_synced = timezone.now()
   student.save(update_fields=["last_synced"])
 
+
 # fetch the ical data, parse the feed, and then apply to the db
 def sync_student(student):
   events = parse_feed(fetch_feed(student.ical_url))
   apply_feed(student, events)
+
 
 # check if student needs a sync
 def needs_sync(student):

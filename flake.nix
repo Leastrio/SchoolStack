@@ -24,6 +24,7 @@
           packages = [
             pythonPkgs
             pkgs.tailwindcss_4
+            pkgs.ruff
           ];
         };
       }

@@ -1,17 +1,21 @@
 import hashlib
-from django.db import models
-from django.utils import timezone
 import zlib
 from decimal import Decimal
 
+from django.db import models
+from django.utils import timezone
+
+
 def hash_feed_url(url):
   return hashlib.sha256(url.encode("utf-8")).hexdigest()
+
 
 class Student(models.Model):
   ical_url = models.URLField(max_length=500)
   url_hash = models.CharField(max_length=64, unique=True)
   last_synced = models.DateTimeField(null=True, blank=True)
   created_at = models.DateTimeField(auto_now_add=True)
+
 
 COURSE_COLORS = [
   "#3b82f6",  # blue
@@ -26,15 +30,18 @@ COURSE_COLORS = [
 
 PERSONAL_COURSE = "Personal"
 
+
 class Course(models.Model):
   student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="courses")
-  code = models.CharField(max_length=100)   # "CS 3300"
-  name = models.CharField(max_length=200)   # "2026Fa CS 3300 001"
+  code = models.CharField(max_length=100)  # "CS 3300"
+  name = models.CharField(max_length=200)  # "2026Fa CS 3300 001"
 
   class Meta:
     ordering = ["code"]
     constraints = [
-      models.UniqueConstraint(fields=["student", "name"], name="unique_course_per_student"), # There can only be one of each course for each student
+      models.UniqueConstraint(
+        fields=["student", "name"], name="unique_course_per_student"
+      ),  # There can only be one of each course for each student
     ]
 
   def __str__(self):
@@ -76,13 +83,22 @@ class CalendarEvent(models.Model):
   def is_overdue(self):
     return not self.completed and self.due_at < timezone.now()
 
+
 GRADE_POINTS = {
-  "A": Decimal("4.0"), "A-": Decimal("3.7"),
-  "B+": Decimal("3.3"), "B": Decimal("3.0"), "B-": Decimal("2.7"),
-  "C+": Decimal("2.3"), "C": Decimal("2.0"), "C-": Decimal("1.7"),
-  "D+": Decimal("1.3"), "D": Decimal("1.0"), "D-": Decimal("0.7"),
+  "A": Decimal("4.0"),
+  "A-": Decimal("3.7"),
+  "B+": Decimal("3.3"),
+  "B": Decimal("3.0"),
+  "B-": Decimal("2.7"),
+  "C+": Decimal("2.3"),
+  "C": Decimal("2.0"),
+  "C-": Decimal("1.7"),
+  "D+": Decimal("1.3"),
+  "D": Decimal("1.0"),
+  "D-": Decimal("0.7"),
   "F": Decimal("0.0"),
 }
+
 
 class GradeEntry(models.Model):
   student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="grades")
