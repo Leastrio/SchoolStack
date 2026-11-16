@@ -1,8 +1,8 @@
 {% extends "app/base.html" %}
 {% block public_content %}
-<div class="mx-auto max-w-lg px-4 py-16 sm:py-24">
-  <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-    <h1 class="text-3xl font-bold text-slate-900">School Stack</h1>
+<div class="mx-auto max-w-lg px-6 py-16 sm:py-24">
+  <div class="rounded-xl border p-6 sm:p-8">
+    <h1 class="text-3xl font-bold">School Stack</h1>
 
     {% if error %}
     <div class="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">{{ error }}</div>
@@ -10,15 +10,15 @@
 
     <form method="post" action="{% url 'connect' %}" class="mt-6 space-y-3">
       {% csrf_token %}
-      <label for="ical_url" class="block text-sm font-medium text-slate-700">Canvas calendar feed URL</label>
+      <label for="ical_url" class="block text-sm font-medium">Canvas calendar feed URL</label>
       <input id="ical_url" name="ical_url" type="url" required autocomplete="off"
              placeholder="https://canvas.uccs.edu/feeds/calendars/user_….ics"
-             class="w-full rounded-lg border border-slate-300 px-3 py-2 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-      <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white hover:bg-indigo-700">Connect</button>
+             class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black/20">
+      <button type="submit" class="w-full rounded-lg border bg-white px-3 py-2 font-medium hover:bg-gray-100">Connect</button>
     </form>
 
-    <details class="mt-6 text-sm text-slate-600">
-      <summary class="cursor-pointer font-medium text-slate-700">Where do I find this?</summary>
+    <details class="mt-6 text-sm text-gray-600">
+      <summary class="cursor-pointer">Where do I find this?</summary>
       <p class="mt-2">In Canvas, open <strong>Calendar</strong>, then click <strong>Calendar Feed</strong> at the bottom of the right sidebar and copy the link.</p>
       <p class="mt-2">Keep this URL private: anyone who has it can see your Canvas calendar.</p>
     </details>

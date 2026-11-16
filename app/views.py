@@ -17,11 +17,11 @@ from .forms import NotesForm, TaskForm, GradeForm
 from .models import PERSONAL_COURSE, CalendarEvent, Course, Student, calculate_gpa, hash_feed_url
 
 HEAT_LEVELS = [
-  "bg-slate-100 text-slate-400",
-  "bg-indigo-100 text-indigo-900",
-  "bg-indigo-300 text-indigo-950",
-  "bg-indigo-500 text-white",
-  "bg-indigo-700 text-white",
+  "bg-white text-gray-400",
+  "bg-sky-100",
+  "bg-sky-200",
+  "bg-sky-300",
+  "bg-sky-400",
 ]
 HEATMAP_DAYS = 14
 
