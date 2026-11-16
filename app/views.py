@@ -52,14 +52,18 @@ def dashboard(req):
 
   now = timezone.now()
   events = student.events.select_related("course")
-  upcoming = events.filter(due_at__gte=now)
+  upcoming = events.filter(completed=False, due_at__gte=now)
+  overdue = events.filter(completed=False, due_at__lt=now)
 
   return render(req, "app/dashboard.html", {
     "student": student,
     "sync_error": sync_error,
+    "overdue": overdue,
+    "overdue_count": overdue.count(),
     "upcoming": upcoming[:10],
-    "due_this_week": upcoming.filter(due_at__lt=now + timedelta(days=7)).count(),
-    "past_due": events.filter(due_at__lt=now, due_at__gte=now - timedelta(days=7)).count(),
+    "due_next_7_days": upcoming.filter(due_at__lt=now + timedelta(days=7)).count(),
+    # Done items due in the last week or later, so they don't clutter the main list
+    "recently_done": events.filter(completed=True, due_at__gte=now - timedelta(days=7)),
   })
 
 @require_POST

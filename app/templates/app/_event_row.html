@@ -11,8 +11,8 @@
       <span class="font-semibold" style="color: {{ event.course.color }};">{{ event.course.code }}</span>
     </div>
   </div>
-  <div class="shrink-0 text-right text-sm text-slate-600">
+  <div class="shrink-0 text-right text-sm{% if event.is_overdue %} font-medium text-red-600{% else %} text-slate-600{% endif %}">
     {{ event.due_at|naturalday:"D, M j"|capfirst }}
-    {% if not event.all_day %}<div class="text-xs text-slate-400">{{ event.due_at|time:"g:i A" }}</div>{% endif %}
+    {% if not event.all_day %}<div class="text-xs{% if event.is_overdue %} text-red-500{% else %} text-slate-400{% endif %}">{{ event.due_at|time:"g:i A" }}</div>{% endif %}
   </div>
 </li>

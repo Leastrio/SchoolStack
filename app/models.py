@@ -1,5 +1,6 @@
 import hashlib
 from django.db import models
+from django.utils import timezone
 import zlib
 
 def hash_feed_url(url):
@@ -60,3 +61,7 @@ class CalendarEvent(models.Model):
 
   def __str__(self):
     return self.title
+
+  @property
+  def is_overdue(self):
+    return not self.completed and self.due_at < timezone.now()
