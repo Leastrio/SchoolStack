@@ -9,6 +9,7 @@
       <p class="text-sm text-slate-500">Synced with Canvas {{ student.last_synced|naturaltime }}</p>
     </div>
     <div class="flex gap-2">
+      <a href="{% url 'add_task' %}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Add task</a>
       <form method="post" action="{% url 'sync' %}">{% csrf_token %}
         <button class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Sync Calendar</button>
       </form>

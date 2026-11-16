@@ -18,6 +18,12 @@
       {% endif %}
     </div>
 
+    {% if event.is_custom %}
+    <form method="post" action="{% url 'delete_task' event.pk %}" onsubmit="return confirm('Delete this task?');">{% csrf_token %}
+      <button class="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Delete task</button>
+    </form>
+    {% endif %}
+
     {% if event.description %}
     <div class="mt-6 border-t border-slate-100 pt-4">
       <div class="mt-2 max-h-80 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-slate-600">{{ event.description }}</div>

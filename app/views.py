@@ -1,16 +1,16 @@
+import uuid
 from datetime import datetime, time, timedelta
 
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 
 from . import canvas
 from .canvas import CanvasFeedError
-from .models import Student, hash_feed_url, CalendarEvent
-from .forms import NotesForm
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
-
+from .forms import NotesForm, TaskForm
+from .models import PERSONAL_COURSE, CalendarEvent, Course, Student, hash_feed_url
 
 HEAT_LEVELS = [
   "bg-slate-100 text-slate-400",
@@ -163,3 +163,52 @@ def event_detail(req, event_id):
     "form": form,
     "saved": req.GET.get("saved") == "1",
   })
+
+
+def redirect_back(req, default):
+  nxt = req.POST.get("next") or req.GET.get("next")
+  if nxt and url_has_allowed_host_and_scheme(nxt, allowed_hosts={req.get_host()}, require_https=req.is_secure()):
+    return redirect(nxt)
+  return redirect(default)
+
+@require_http_methods(["GET", "POST"])
+def add_task(req):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+
+  if req.method == "POST":
+    form = TaskForm(req.POST, student=student)
+    if form.is_valid():
+      data = form.cleaned_data
+      course = data["course"]
+      if course is None:
+        course, _ = Course.objects.get_or_create(student=student, name=PERSONAL_COURSE, defaults={"code": PERSONAL_COURSE})
+      due_time = data["due_time"]
+      CalendarEvent.objects.create(
+        student=student,
+        course=course,
+        uid=f"custom-{uuid.uuid4().hex}",
+        title=data["title"].strip(),
+        notes=data["notes"].strip(),
+        due_at=timezone.make_aware(datetime.combine(data["due_date"], due_time or time(23, 59))),
+        all_day=due_time is None,
+        is_custom=True,
+      )
+      return redirect_back(req, "dashboard")
+  else:
+    form = TaskForm(student=student, initial={"course": req.GET.get("course"), "due_date": timezone.localdate()})
+
+  nxt = req.POST.get("next") or req.GET.get("next") or ""
+  if not url_has_allowed_host_and_scheme(nxt, allowed_hosts={req.get_host()}, require_https=req.is_secure()):
+    nxt = ""
+  return render(req, "app/task_form.html", {"form": form, "next": nxt})
+
+@require_POST
+def delete_task(req, event_id):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+  event = get_object_or_404(CalendarEvent, pk=event_id, student=student, is_custom=True)
+  event.delete()
+  return redirect("dashboard")

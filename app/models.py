@@ -23,6 +23,8 @@ COURSE_COLORS = [
   "#f97316",  # orange
 ]
 
+PERSONAL_COURSE = "Personal"
+
 class Course(models.Model):
   student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="courses")
   code = models.CharField(max_length=100)   # "CS 3300"
@@ -38,6 +40,8 @@ class Course(models.Model):
 
   @property
   def color(self):
+    if self.name == PERSONAL_COURSE:
+      return "#64748b"  # slate
     return COURSE_COLORS[zlib.crc32(self.name.encode("utf-8")) % len(COURSE_COLORS)]
 
 
@@ -53,6 +57,7 @@ class CalendarEvent(models.Model):
   canvas_url = models.URLField(max_length=500, blank=True)
   completed = models.BooleanField(default=False)
   notes = models.TextField(blank=True)
+  is_custom = models.BooleanField(default=False)
 
   class Meta:
     ordering = ["due_at"]

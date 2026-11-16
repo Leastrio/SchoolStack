@@ -160,7 +160,7 @@ def apply_feed(student, events):
     )
     seen_uids.append(event.uid)
 
-  CalendarEvent.objects.filter(student=student).exclude(uid__in=seen_uids).delete()
+  CalendarEvent.objects.filter(student=student, is_custom=False).exclude(uid__in=seen_uids).delete()
   Course.objects.filter(student=student, events__isnull=True).delete()
 
   student.last_synced = timezone.now()
