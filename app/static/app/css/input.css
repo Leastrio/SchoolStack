@@ -2,3 +2,30 @@
 
 @source "../../../templates/**/*.html";
 @source "../../../**/*.py";
+
+.canvas-description {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-slate-700);
+  overflow-wrap: anywhere;
+}
+.canvas-description :is(p, ul, ol, pre, blockquote, table, hr) { margin-top: 0.75rem; }
+.canvas-description :first-child { margin-top: 0; }
+.canvas-description h1 { font-size: 1.25rem; font-weight: 700; color: var(--color-slate-900); margin-top: 1.25rem; }
+.canvas-description h2 { font-size: 1.125rem; font-weight: 600; color: var(--color-slate-900); margin-top: 1.25rem; }
+.canvas-description h3,
+.canvas-description h4 { font-weight: 600; color: var(--color-slate-900); margin-top: 1rem; }
+.canvas-description ul { list-style: disc; padding-left: 1.25rem; }
+.canvas-description ol { list-style: decimal; padding-left: 1.25rem; }
+.canvas-description li + li { margin-top: 0.25rem; }
+.canvas-description a,
+.canvas-description a strong { color: var(--color-indigo-600); text-decoration: underline; }
+.canvas-description strong, .canvas-description b { font-weight: 600; color: var(--color-slate-900); }
+.canvas-description em, .canvas-description i { font-style: italic; }
+.canvas-description code { font-family: var(--font-mono); font-size: 0.8125rem; background: var(--color-slate-100); padding: 0.1rem 0.3rem; border-radius: 0.25rem; }
+.canvas-description pre { background: var(--color-slate-100); padding: 0.75rem; border-radius: 0.5rem; overflow-x: auto; }
+.canvas-description pre code { background: none; padding: 0; }
+.canvas-description hr { border-color: var(--color-slate-200); }
+.canvas-description blockquote { border-left: 3px solid var(--color-slate-300); padding-left: 0.75rem; color: var(--color-slate-600); }
+.canvas-description table { border-collapse: collapse; display: block; overflow-x: auto; }
+.canvas-description th, .canvas-description td { border: 1px solid var(--color-slate-200); padding: 0.375rem 0.625rem; text-align: left; }

@@ -4,6 +4,7 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
+import nh3
 
 from django.db import transaction
 from django.utils import timezone
@@ -37,6 +38,7 @@ class FeedEvent:
   due_at: datetime
   all_day: bool
   canvas_url: str
+  description_html: str = ""
 
 # getting the ical feed
 
@@ -103,6 +105,39 @@ def to_due_at(dtstart, local_tz):
     
   return datetime.combine(dtstart, time(23, 59), tzinfo=local_tz), True
 
+# Canvas's formatted descriptions
+DESCRIPTION_TAGS = {
+  "p", "br", "hr", "div", "span",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "strong", "b", "em", "i", "u", "s", "sub", "sup",
+  "ul", "ol", "li",
+  "a", "code", "pre", "blockquote",
+  "table", "thead", "tbody", "tr", "th", "td",
+}
+DESCRIPTION_ATTRIBUTES = {
+  "a": {"href", "title"},
+  "td": {"colspan", "rowspan"},
+  "th": {"colspan", "rowspan"},
+}
+
+def canvas_html_description(event):
+  for prop in event.extras:
+    if prop.name.lower() == "x-alt-desc":
+      return re.sub(r"\\([\\;,nN])", lambda m: "\n" if m.group(1) in "nN" else m.group(1), prop.value)
+  return ""
+
+def clean_description_html(html):
+  if not html:
+    return ""
+  return nh3.clean(
+    html,
+    tags=DESCRIPTION_TAGS,
+    attributes=DESCRIPTION_ATTRIBUTES,
+    url_schemes={"http", "https", "mailto"},
+    link_rel="noopener noreferrer",
+    set_tag_attribute_values={"a": {"target": "_blank"}},
+  ).strip()
+
 # parse the ical data into events
 def parse_feed(text, local_tz=None):
   local_tz = local_tz or timezone.get_default_timezone()
@@ -125,6 +160,7 @@ def parse_feed(text, local_tz=None):
       due_at=due_at,
       all_day=all_day,
       canvas_url=str(event.url or "").strip()[:500],
+      description_html=clean_description_html(canvas_html_description(event)),
     ))
   return events
 
@@ -156,6 +192,7 @@ def apply_feed(student, events):
         "due_at": event.due_at,
         "all_day": event.all_day,
         "canvas_url": event.canvas_url,
+        "description_html": event.description_html,
       },
     )
     seen_uids.append(event.uid)

@@ -61,6 +61,7 @@ class CalendarEvent(models.Model):
   notes = models.TextField(blank=True)
   is_custom = models.BooleanField(default=False)
   created_at = models.DateTimeField(default=timezone.now, editable=False)
+  description_html = models.TextField(blank=True)
 
   class Meta:
     ordering = ["due_at"]

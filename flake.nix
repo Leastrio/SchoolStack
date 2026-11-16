@@ -17,6 +17,7 @@
           pip
           django
           ical
+          nh3
         ]);
       in rec {
         devShells.default = pkgs.mkShell {

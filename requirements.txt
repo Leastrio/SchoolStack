@@ -10,3 +10,4 @@ sqlparse==0.5.5
 typing-inspection==0.4.3
 typing_extensions==4.16.0
 tzdata==2026.3
+nh3>=0.2.15

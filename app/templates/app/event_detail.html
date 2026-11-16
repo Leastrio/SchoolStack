@@ -24,10 +24,10 @@
     </form>
     {% endif %}
 
-    {% if event.description %}
-    <div class="mt-6 border-t border-slate-100 pt-4">
-      <div class="mt-2 max-h-80 overflow-y-auto whitespace-pre-line text-sm leading-relaxed text-slate-600">{{ event.description }}</div>
-    </div>
+    {% if event.description_html %}
+    <div class="canvas-description mt-6 border-t border-slate-100 pt-4">{{ event.description_html|safe }}</div>
+    {% elif event.description %}
+    <div class="mt-6 whitespace-pre-line border-t border-slate-100 pt-4 text-sm leading-relaxed text-slate-600">{{ event.description }}</div>
     {% endif %}
   </div>
 
