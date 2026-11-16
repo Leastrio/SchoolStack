@@ -1,0 +1,45 @@
+{% extends "app/base.html" %}
+{% block title %}Notifications · School Stack{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl">
+  <h1 class="text-2xl font-bold text-slate-900">Notifications</h1>
+  
+  <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-5">
+    <div>
+      <h2 class="font-semibold text-slate-900">Browser alerts</h2>
+      <p class="text-sm text-slate-500" data-alerts-status>Get a notification when something is due within 24 hours or goes overdue, while School Stack is open in a tab.</p>
+    </div>
+    <button type="button" data-enable-alerts hidden
+            class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700">Turn on browser alerts</button>
+  </div>
+
+  {% if not overdue and not due_soon and not new_from_canvas %}
+  <div class="mt-6 rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500">
+    Nothing needs your attention right now.
+  </div>
+  {% endif %}
+
+  {% if overdue %}
+  <div class="mt-6 rounded-xl border border-red-200 bg-white p-5">
+    <h2 class="font-semibold text-red-700">Overdue ({{ overdue|length }})</h2>
+    <p class="text-sm text-slate-500">Past the due date and not marked done.</p>
+    <ul class="divide-y divide-slate-100">{% for event in overdue %}{% include "app/_event_row.html" %}{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if due_soon %}
+  <div class="mt-4 rounded-xl border border-amber-200 bg-white p-5">
+    <h2 class="font-semibold text-amber-700">Due in the next 24 hours ({{ due_soon|length }})</h2>
+    <ul class="divide-y divide-slate-100">{% for event in due_soon %}{% include "app/_event_row.html" %}{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if new_from_canvas %}
+  <div class="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+    <h2 class="font-semibold text-slate-900">New from Canvas</h2>
+    <p class="text-sm text-slate-500">Assignments that showed up in the last 3 days.</p>
+    <ul class="divide-y divide-slate-100">{% for event in new_from_canvas %}{% include "app/_event_row.html" %}{% endfor %}</ul>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

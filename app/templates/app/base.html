@@ -17,6 +17,10 @@
         <a href="{% url 'dashboard' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'dashboard' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Home</a>
         <a href="{% url 'calendar' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'calendar' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Calendar</a>
         <a href="{% url 'courses' %}" class="whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'courses' or page == 'course_detail' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">Courses</a>
+        <a href="{% url 'notifications' %}" class="flex items-center justify-between gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm {% if page == 'notifications' %}bg-indigo-50 font-semibold text-indigo-700{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+          Notifications
+          {% if alert_count %}<span class="rounded-full bg-red-500 px-2 py-0.5 text-xs font-semibold text-white">{{ alert_count }}</span>{% endif %}
+        </a>
       </div>
       <div class="hidden border-t border-slate-200 px-3 py-4 md:mt-auto md:block">
         <form method="post" action="{% url 'logout' %}">{% csrf_token %}
@@ -50,6 +54,75 @@
         row.querySelector("[data-title]").classList.toggle("line-through", data.completed);
       });
     });
+
+
+    // Browser notifications
+    const CHECK_URL = "{% url 'notifications_check' %}";
+    const CHECK_EVERY_MS = 5 * 60 * 1000;
+    const MAX_POPUPS = 3;
+    const SEEN_KEY = "schoolstack-alerted";
+
+    function loadSeen() {
+      try { return JSON.parse(localStorage.getItem(SEEN_KEY)) || {}; } catch { return {}; }
+    }
+    function saveSeen(seen) {
+      const monthAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+      for (const key in seen) if (seen[key] < monthAgo) delete seen[key];
+      try { localStorage.setItem(SEEN_KEY, JSON.stringify(seen)); } catch {}
+    }
+
+    async function checkForAlerts() {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      const res = await fetch(CHECK_URL, { headers: { Accept: "application/json" } });
+      if (!res.ok) return;
+      const { items } = await res.json();
+
+      const seen = loadSeen();
+      const fresh = items.filter(item => !seen[`${item.id}:${item.overdue ? "overdue" : "soon"}`]);
+      fresh.slice(0, MAX_POPUPS).forEach(item => {
+        const popup = new Notification(item.overdue ? `Overdue: ${item.title}` : `Due soon: ${item.title}`, {
+          body: `${item.course} · due ${item.when}`,
+          tag: `schoolstack-${item.id}`,
+        });
+        popup.onclick = () => { window.focus(); window.location.href = item.url; };
+      });
+      if (fresh.length > MAX_POPUPS) {
+        const popup = new Notification(`${fresh.length - MAX_POPUPS} more need attention`, {
+          body: "Open School Stack to see everything due soon or overdue.",
+          tag: "schoolstack-summary",
+        });
+        popup.onclick = () => { window.focus(); window.location.href = "{% url 'notifications' %}"; };
+      }
+      fresh.forEach(item => { seen[`${item.id}:${item.overdue ? "overdue" : "soon"}`] = Date.now(); });
+      saveSeen(seen);
+    }
+
+    function showAlertStatus() {
+      const status = document.querySelector("[data-alerts-status]");
+      const button = document.querySelector("[data-enable-alerts]");
+      if (!status || !button) return;
+      if (!("Notification" in window)) {
+        status.textContent = "This browser doesn't support notifications.";
+        button.hidden = true;
+      } else if (Notification.permission === "granted") {
+        status.textContent = "You'll get a notification while School Stack is open in a tab.";
+        button.hidden = true;
+      } else if (Notification.permission === "denied") {
+        status.textContent = "Allow notifications for this site in your browser settings.";
+        button.hidden = true;
+      } else {
+        button.hidden = false;
+      }
+    }
+    document.querySelector("[data-enable-alerts]")?.addEventListener("click", async () => {
+      await Notification.requestPermission();
+      showAlertStatus();
+      checkForAlerts();
+    });
+
+    showAlertStatus();
+    checkForAlerts();
+    setInterval(checkForAlerts, CHECK_EVERY_MS);
   </script>
   {% else %}
   <main>

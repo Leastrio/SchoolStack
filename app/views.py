@@ -5,6 +5,8 @@ from datetime import date, datetime, time, timedelta
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_http_methods, require_POST
 from django.db.models import Count, Q
@@ -285,3 +287,48 @@ def course_detail(req, course_id):
     "done": done,
     "percent": round(done * 100 / total) if total else 0,
   })
+
+
+def alert_events(student):
+  now = timezone.now()
+  open_events = student.events.filter(completed=False).select_related("course")
+  overdue = open_events.filter(due_at__lt=now)
+  due_soon = open_events.filter(due_at__gte=now, due_at__lt=now + timedelta(hours=24))
+  return overdue, due_soon
+
+def notifications(req):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+
+  now = timezone.now()
+  overdue, due_soon = alert_events(student)
+  # Assignments Canvas added in the last 3 days. Skip the first hour after signing up,
+  # otherwise every assignment counts as "new" on day one.
+  new_since = max(now - timedelta(days=3), student.created_at + timedelta(hours=1))
+  new_from_canvas = student.events.filter(is_custom=False, created_at__gte=new_since).select_related("course").order_by("-created_at")
+
+  return render(req, "app/notifications.html", {
+    "overdue": overdue,
+    "due_soon": due_soon,
+    "new_from_canvas": new_from_canvas,
+  })
+
+
+def notifications_check(req):
+  student = current_student(req)
+  if student is None:
+    return JsonResponse({"error": "Not connected"}, status=401)
+  overdue, due_soon = alert_events(student)
+  items = []
+  # Due-soon first: it's the one you can still do something about
+  for event in list(due_soon) + list(overdue):
+    items.append({
+      "id": event.pk,
+      "title": event.title,
+      "course": event.course.code,
+      "overdue": event.is_overdue,
+      "when": naturaltime(event.due_at),  # "in 3 hours" / "2 days ago"
+      "url": reverse("event_detail", args=[event.pk]),
+    })
+  return JsonResponse({"items": items})
