@@ -11,4 +11,5 @@ urlpatterns = [
   path("event/<int:event_id>/toggle/", views.toggle_event_completion, name="toggle_event"),
   path("event/<int:event_id>/delete/", views.delete_task, name="delete_task"),
   path("tasks/new/", views.add_task, name="add_task"),
+  path("calendar/", views.calendar_view, name="calendar"),
 ]

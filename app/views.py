@@ -1,5 +1,6 @@
+import calendar
 import uuid
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -212,3 +213,39 @@ def delete_task(req, event_id):
   event = get_object_or_404(CalendarEvent, pk=event_id, student=student, is_custom=True)
   event.delete()
   return redirect("dashboard")
+
+
+def calendar_view(req):
+  student = current_student(req)
+  if student is None:
+    return redirect("connect")
+
+  today = timezone.localdate()
+  try:
+    year, month = (int(part) for part in req.GET.get("month", "").split("-"))
+    first = date(year, month, 1)
+  except ValueError:
+    first = today.replace(day=1)
+
+  # Full weeks (Sunday first) covering the month, including spill-over days from next/previous months
+  weeks = calendar.Calendar(firstweekday=6).monthdatescalendar(first.year, first.month)
+  start, end = day_start(weeks[0][0]), day_start(weeks[-1][-1] + timedelta(days=1))
+
+  by_day = {}
+  for event in student.events.filter(due_at__gte=start, due_at__lt=end).select_related("course"):
+    by_day.setdefault(local_date(event.due_at), []).append(event)
+
+  prev_month = (first - timedelta(days=1)).replace(day=1)
+  next_month = (first + timedelta(days=32)).replace(day=1)
+
+  return render(req, "app/calendar.html", {
+    "month": first,
+    "weeks": [
+      [{"date": d, "in_month": d.month == first.month, "is_today": d == today, "events": by_day.get(d, [])} for d in week]
+      for week in weeks
+    ],
+    "weekday_names": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    "prev_month": prev_month.strftime("%Y-%m"),
+    "next_month": next_month.strftime("%Y-%m"),
+    "this_month": today.strftime("%Y-%m"),
+  })

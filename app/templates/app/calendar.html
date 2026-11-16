@@ -1,0 +1,46 @@
+{% extends "app/base.html" %}
+{% block title %}Calendar · School Stack{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-6xl">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-2xl font-bold text-slate-900">{{ month|date:"F Y" }}</h1>
+    <div class="flex gap-2 text-sm">
+      <a href="?month={{ prev_month }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 hover:bg-slate-50" aria-label="Previous month">&larr; Prev</a>
+      <a href="?month={{ this_month }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 hover:bg-slate-50">Today</a>
+      <a href="?month={{ next_month }}" class="rounded-lg border border-slate-300 bg-white px-3 py-2 hover:bg-slate-50" aria-label="Next month">Next &rarr;</a>
+    </div>
+  </div>
+
+  <div class="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <div class="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-center text-xs font-medium text-slate-500">
+      {% for name in weekday_names %}<div class="py-2">{{ name }}</div>{% endfor %}
+    </div>
+    {% for week in weeks %}
+    <div class="grid grid-cols-7 {% if not forloop.last %}border-b border-slate-200{% endif %}">
+      {% for day in week %}
+      <div class="min-h-20 border-slate-200 p-1 sm:min-h-28 sm:p-1.5 {% if not forloop.last %}border-r{% endif %} {% if not day.in_month %}bg-slate-50{% endif %}">
+        <div class="mb-1 text-right text-xs">
+          <span class="inline-flex h-6 w-6 items-center justify-center rounded-full
+            {% if day.is_today %}bg-indigo-600 font-semibold text-white{% elif day.in_month %}text-slate-700{% else %}text-slate-400{% endif %}">{{ day.date.day }}</span>
+        </div>
+
+        <div class="hidden space-y-1 sm:block">
+          {% for event in day.events %}
+          <a href="{% url 'event_detail' event.pk %}" title="{{ event.course.code }}: {{ event.title }}"
+             class="block truncate rounded px-1.5 py-0.5 text-xs font-medium hover:brightness-95 {% if event.completed %}line-through opacity-50{% endif %}"
+             style="background-color: {{ event.course.color }}22; color: {{ event.course.color }};">{{ event.title }}</a>
+          {% endfor %}
+        </div>
+        <div class="flex flex-wrap gap-1 sm:hidden">
+          {% for event in day.events %}
+          <a href="{% url 'event_detail' event.pk %}" title="{{ event.title }}" aria-label="{{ event.title }}"
+             class="h-2.5 w-2.5 rounded-full {% if event.completed %}opacity-30{% endif %}" style="background-color: {{ event.course.color }};"></a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
